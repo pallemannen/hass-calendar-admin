@@ -48,6 +48,11 @@ normal dashboard display card, see something like
 Settings → Devices & Services → Calendar Admin → delete. Then remove it via
 HACS.
 
+## License
+
+MIT - see [LICENSE](LICENSE).
+
+
 ## Icon
 
 Icon credits go to [Magnific - Flaticon](https://www.flaticon.com/free-icons/calendar)
