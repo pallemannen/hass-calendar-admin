@@ -1,5 +1,7 @@
 # Calendar Admin
 
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?category=Integration&repository=https%3A%2F%2Fgithub.com%2Fpallemannen%2Fhass-calendar-admin&owner=Patrik+Bodin+%3Cthe%40pal.pp.se%3E)
+
 Hass Calendar Admin is a replacement for the stock Calendar sidebar panel
 provided by Home Assistant, with some additional features — specifically the
 two things the built-in Calendar panel doesn't offer:
