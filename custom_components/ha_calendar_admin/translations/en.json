@@ -1,0 +1,13 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Calendar Admin",
+        "description": "Adds an admin-only sidebar panel for viewing all your calendars merged together, with live checkboxes to show/hide each one and control over sort order. Nothing to configure — just confirm to install."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Calendar Admin is already set up. Only one instance is needed."
+    }
+  }
+}
