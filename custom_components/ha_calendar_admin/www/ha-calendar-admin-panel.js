@@ -273,12 +273,27 @@ class HaCalendarAdminPanel extends HTMLElement {
   }
 
   connectedCallback() {
+    // HA Core 2026.8 regression: the generic <ha-custom-panel> wrapper gets a
+    // broken computed height on wide viewports, collapsing anything inside
+    // that relies on percentage-based height (like :host { height: 100% }
+    // below). vh/dvh sidestep the broken parent entirely instead of
+    // depending on it having a resolvable height.
+    this.style.display = "block";
+    this.style.height = "100vh";
+    this.style.height = "100dvh";
+
     if (this._hass && !this._rendered) {
       this._render();
+    } else if (this._calendar) {
+      this._calendar.updateSize();
     }
   }
 
   disconnectedCallback() {
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect();
+      this._resizeObserver = null;
+    }
     if (this._calendar) {
       this._calendar.destroy();
       this._calendar = null;
@@ -341,20 +356,39 @@ class HaCalendarAdminPanel extends HTMLElement {
     }
 
     const calendarEl = this.shadowRoot.getElementById("calendar-main");
-    this._calendar = new this._fc.Calendar(calendarEl, {
-      headerToolbar: {
-        left: "prev,next today",
-        center: "title",
-        right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
-      },
-      initialView: "dayGridMonth",
-      height: "100%",
-      firstDay: 0,
-      eventSources: this._entityIds
-        .filter((id) => !this._hidden.has(id))
-        .map((id) => makeEventSource(() => this._hass, id, colorForEntity(id))),
-    });
-    this._calendar.render();
+    try {
+      this._calendar = new this._fc.Calendar(calendarEl, {
+        headerToolbar: {
+          left: "prev,next today",
+          center: "title",
+          right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
+        },
+        initialView: "dayGridMonth",
+        height: "100%",
+        firstDay: 0,
+        eventSources: this._entityIds
+          .filter((id) => !this._hidden.has(id))
+          .map((id) => makeEventSource(() => this._hass, id, colorForEntity(id))),
+      });
+      this._calendar.render();
+    } catch (err) {
+      console.error("Calendar Admin: failed to initialize FullCalendar", err);
+      calendarEl.innerHTML =
+        '<div class="empty-state">Failed to initialize calendar. See browser console for details.</div>';
+      return;
+    }
+
+    // FullCalendar can measure a stale/zero size if it renders before the
+    // host's own height (set in connectedCallback) has taken effect.
+    if (!this._resizeObserver) {
+      this._resizeObserver = new ResizeObserver(() => {
+        if (this._calendar) {
+          this._calendar.updateSize();
+        }
+      });
+      this._resizeObserver.observe(this);
+    }
+
     this._updateSelectAllState();
   }
 
