@@ -378,15 +378,31 @@ class HaCalendarAdminPanel extends HTMLElement {
       return;
     }
 
-    // FullCalendar can measure a stale/zero size if it renders before the
-    // host's own height (set in connectedCallback) has taken effect.
+    // FullCalendar measures its container's width on first render to decide
+    // event layout, using a hidden-measure-then-reveal pass internally. If
+    // that first measurement happens before the surrounding flexbox
+    // (.calendar-main { flex: 1 }) has settled to its real width -- which
+    // happens reliably inside a shadow root on first paint -- it measures 0
+    // and never gets nudged to re-measure, leaving everything permanently
+    // `visibility: hidden; width: 0`. Force one fresh measurement a couple
+    // of frames after render, once real layout has settled.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (this._calendar) {
+          this._calendar.updateSize();
+        }
+      });
+    });
+
+    // Keep re-measuring on any subsequent size change too (sidebar toggle,
+    // window resize, narrow-mode changes).
     if (!this._resizeObserver) {
       this._resizeObserver = new ResizeObserver(() => {
         if (this._calendar) {
           this._calendar.updateSize();
         }
       });
-      this._resizeObserver.observe(this);
+      this._resizeObserver.observe(calendarEl);
     }
 
     this._updateSelectAllState();
