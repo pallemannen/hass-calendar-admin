@@ -161,6 +161,22 @@ const STYLE = `
     box-sizing: border-box;
     overflow: hidden;
   }
+  /* Below this width, a fixed 280px sidebar leaves too little room for
+     FullCalendar to render a usable grid (each day column can end up a
+     few px wide). Stack the sidebar above the calendar instead so the
+     calendar always gets the full width. */
+  @media (max-width: 700px) {
+    .layout {
+      flex-direction: column;
+    }
+    .sidebar {
+      width: 100%;
+      flex: 0 0 auto;
+      max-height: 35vh;
+      border-right: none;
+      border-bottom: 1px solid var(--divider-color, #e0e0e0);
+    }
+  }
   .sidebar-header {
     padding: 12px 16px;
     border-bottom: 1px solid var(--divider-color, #e0e0e0);
@@ -369,6 +385,16 @@ class HaCalendarAdminPanel extends HTMLElement {
         eventSources: this._entityIds
           .filter((id) => !this._hidden.has(id))
           .map((id) => makeEventSource(() => this._hass, id, colorForEntity(id))),
+        // Fires whenever any event source (initial or dynamically added via
+        // a checkbox toggle) finishes fetching -- the actual moment new
+        // events land in the DOM, and the right time to force a fresh
+        // measurement (see the updateSize() comment below for why one is
+        // needed at all).
+        loading: (isLoading) => {
+          if (!isLoading && this._calendar) {
+            this._calendar.updateSize();
+          }
+        },
       });
       this._calendar.render();
     } catch (err) {
