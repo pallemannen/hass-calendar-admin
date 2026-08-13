@@ -52,7 +52,6 @@ HACS.
 
 MIT - see [LICENSE](LICENSE).
 
-
 ## Icon
 
 Icon credits go to [Magnific - Flaticon](https://www.flaticon.com/free-icons/calendar)
