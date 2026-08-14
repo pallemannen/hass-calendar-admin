@@ -15,6 +15,10 @@ two things the built-in Calendar panel doesn't offer:
 - **Week numbers** on or off. Default is on.
 - **Color picker** to change the color of each calendar. The default
   is derived from the entity ID.
+- **Timeline** Indicate current time in weekly and daily views. Default
+  is on.
+- **Max events** to show per day. Default is unlimited.
+- **24h** or 12h clock. Default is 24h.
 
 Events from every checked calendar are merged into one
 [FullCalendar](https://fullcalendar.io/) month/week/day/list view, each
