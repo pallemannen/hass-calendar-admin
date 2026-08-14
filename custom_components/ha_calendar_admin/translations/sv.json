@@ -1,0 +1,13 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Installera Calendar Admin",
+        "description": "Installerar en administrativ kalender i sidofältet, liknande den inbyggda kalendern, men med en kryssruta för att välja alla (eller ingen) kalender, sorteringsalternativ samt några andra inställning som den inbyggda kalendervyn saknar."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Calendar Admin är redan installerad."
+    }
+  }
+}
