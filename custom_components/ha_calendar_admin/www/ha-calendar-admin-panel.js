@@ -15,6 +15,10 @@ const FC_SCRIPT_URL = "/ha_calendar_admin_static/vendor/fullcalendar.global.min.
 const STORAGE_HIDDEN = "ha-calendar-admin-panel.hidden-calendars";
 const STORAGE_SORT = "ha-calendar-admin-panel.sort";
 const STORAGE_FIRST_DAY = "ha-calendar-admin-panel.first-day";
+const STORAGE_COLORS = "ha-calendar-admin-panel.colors";
+const STORAGE_WEEK_NUMBERS = "ha-calendar-admin-panel.week-numbers";
+const STORAGE_NOW_INDICATOR = "ha-calendar-admin-panel.now-indicator";
+const STORAGE_MAX_EVENTS = "ha-calendar-admin-panel.max-events";
 
 let fcLoadPromise = null;
 
@@ -85,15 +89,80 @@ function saveFirstDay(value) {
   }
 }
 
+function loadColorOverrides() {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_COLORS);
+    return raw ? JSON.parse(raw) : {};
+  } catch (err) {
+    return {};
+  }
+}
+
+function saveColorOverrides(overrides) {
+  try {
+    window.localStorage.setItem(STORAGE_COLORS, JSON.stringify(overrides));
+  } catch (err) {
+    // ignore
+  }
+}
+
+function loadBoolSetting(key, defaultValue) {
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw === null ? defaultValue : raw === "true";
+  } catch (err) {
+    return defaultValue;
+  }
+}
+
+function saveBoolSetting(key, value) {
+  try {
+    window.localStorage.setItem(key, String(value));
+  } catch (err) {
+    // ignore
+  }
+}
+
+// "" means unlimited (FullCalendar's dayMaxEvents: false).
+function loadMaxEvents() {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_MAX_EVENTS);
+    return raw === null || raw === "" ? false : parseInt(raw, 10);
+  } catch (err) {
+    return false;
+  }
+}
+
+function saveMaxEvents(value) {
+  try {
+    window.localStorage.setItem(STORAGE_MAX_EVENTS, value === false ? "" : String(value));
+  } catch (err) {
+    // ignore
+  }
+}
+
+// hex, not hsl(), because <input type="color"> requires a hex value and
+// this color also gets used to seed that input.
+function hslToHex(h, s, l) {
+  s /= 100;
+  l /= 100;
+  const k = (n) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  const toHex = (n) => Math.round(255 * f(n)).toString(16).padStart(2, "0");
+  return `#${toHex(0)}${toHex(8)}${toHex(4)}`;
+}
+
 // Stable, deterministic color per calendar entity so the same calendar
-// always gets the same color across reloads/sort changes.
+// always gets the same color across reloads/sort changes, unless the user
+// picked their own via the color swatch (see _colorFor).
 function colorForEntity(entityId) {
   let hash = 0;
   for (let i = 0; i < entityId.length; i++) {
     hash = (hash * 31 + entityId.charCodeAt(i)) >>> 0;
   }
   const hue = hash % 360;
-  return `hsl(${hue}, 62%, 45%)`;
+  return hslToHex(hue, 62, 45);
 }
 
 function friendlyName(stateObj) {
@@ -210,6 +279,27 @@ const STYLE = `
     cursor: pointer;
     user-select: none;
   }
+  .option-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .option-row.max-events-row {
+    justify-content: space-between;
+    cursor: default;
+  }
+  .option-row.max-events-row select {
+    width: auto;
+    padding: 3px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--divider-color, #e0e0e0);
+    background: var(--card-background-color, #fff);
+    color: var(--primary-text-color, #212121);
+    font-size: 13px;
+  }
   select#sort-select,
   select#first-day-select {
     width: 100%;
@@ -239,10 +329,28 @@ const STYLE = `
     background: var(--secondary-background-color, #f5f5f5);
   }
   .dot {
-    width: 10px;
-    height: 10px;
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    flex: 0 0 14px;
+    padding: 0;
+    border: 1px solid rgba(0, 0, 0, 0.2);
     border-radius: 50%;
-    flex: 0 0 10px;
+    cursor: pointer;
+    background: none;
+  }
+  .dot::-webkit-color-swatch-wrapper {
+    padding: 0;
+    border-radius: 50%;
+  }
+  .dot::-webkit-color-swatch {
+    border: none;
+    border-radius: 50%;
+  }
+  .dot::-moz-color-swatch {
+    border: none;
+    border-radius: 50%;
   }
   .cal-name {
     overflow: hidden;
@@ -275,6 +383,10 @@ class HaCalendarAdminPanel extends HTMLElement {
     this._hidden = loadHiddenSet();
     this._sort = loadSort();
     this._firstDay = loadFirstDay();
+    this._colorOverrides = loadColorOverrides();
+    this._weekNumbers = loadBoolSetting(STORAGE_WEEK_NUMBERS, true);
+    this._nowIndicator = loadBoolSetting(STORAGE_NOW_INDICATOR, true);
+    this._maxEvents = loadMaxEvents();
     this._rendered = false;
   }
 
@@ -364,6 +476,23 @@ class HaCalendarAdminPanel extends HTMLElement {
               <option value="0">Week starts Sunday</option>
               <option value="1">Week starts Monday</option>
             </select>
+            <label class="option-row">
+              <input type="checkbox" id="week-numbers-toggle">
+              <span>Show week numbers</span>
+            </label>
+            <label class="option-row">
+              <input type="checkbox" id="now-indicator-toggle">
+              <span>Show current time indicator</span>
+            </label>
+            <label class="option-row max-events-row">
+              <span>Max events per day</span>
+              <select id="max-events-select">
+                <option value="">Unlimited</option>
+                <option value="3">3</option>
+                <option value="5">5</option>
+                <option value="8">8</option>
+              </select>
+            </label>
           </div>
           <ul class="calendar-list" id="calendar-list"></ul>
         </aside>
@@ -379,6 +508,21 @@ class HaCalendarAdminPanel extends HTMLElement {
     this.shadowRoot
       .getElementById("first-day-select")
       .addEventListener("change", (e) => this._onFirstDayChange(parseInt(e.target.value, 10)));
+    this.shadowRoot.getElementById("week-numbers-toggle").checked = this._weekNumbers;
+    this.shadowRoot
+      .getElementById("week-numbers-toggle")
+      .addEventListener("change", (e) => this._onWeekNumbersChange(e.target.checked));
+    this.shadowRoot.getElementById("now-indicator-toggle").checked = this._nowIndicator;
+    this.shadowRoot
+      .getElementById("now-indicator-toggle")
+      .addEventListener("change", (e) => this._onNowIndicatorChange(e.target.checked));
+    this.shadowRoot.getElementById("max-events-select").value =
+      this._maxEvents === false ? "" : String(this._maxEvents);
+    this.shadowRoot
+      .getElementById("max-events-select")
+      .addEventListener("change", (e) =>
+        this._onMaxEventsChange(e.target.value === "" ? false : parseInt(e.target.value, 10))
+      );
     this.shadowRoot
       .getElementById("select-all")
       .addEventListener("change", (e) => this._onSelectAll(e.target.checked));
@@ -419,9 +563,12 @@ class HaCalendarAdminPanel extends HTMLElement {
         // genuine overflow.
         height: "auto",
         firstDay: this._firstDay,
+        weekNumbers: this._weekNumbers,
+        nowIndicator: this._nowIndicator,
+        dayMaxEvents: this._maxEvents,
         eventSources: this._entityIds
           .filter((id) => !this._hidden.has(id))
-          .map((id) => makeEventSource(() => this._hass, id, colorForEntity(id))),
+          .map((id) => makeEventSource(() => this._hass, id, this._colorFor(id))),
         // Fires whenever any event source (initial or dynamically added via
         // a checkbox toggle) finishes fetching -- the actual moment new
         // events land in the DOM, and the right time to force a fresh
@@ -491,9 +638,13 @@ class HaCalendarAdminPanel extends HTMLElement {
         this._onToggleCalendar(cal.entityId, checkbox.checked)
       );
 
-      const dot = document.createElement("span");
+      const dot = document.createElement("input");
+      dot.type = "color";
       dot.className = "dot";
-      dot.style.background = colorForEntity(cal.entityId);
+      dot.value = this._colorFor(cal.entityId);
+      dot.title = "Click to change this calendar's color";
+      dot.addEventListener("click", (e) => e.stopPropagation());
+      dot.addEventListener("input", (e) => this._onColorChange(cal.entityId, e.target.value));
 
       const name = document.createElement("span");
       name.className = "cal-name";
@@ -528,6 +679,51 @@ class HaCalendarAdminPanel extends HTMLElement {
     }
   }
 
+  _onWeekNumbersChange(value) {
+    this._weekNumbers = value;
+    saveBoolSetting(STORAGE_WEEK_NUMBERS, value);
+    if (this._calendar) {
+      this._calendar.setOption("weekNumbers", value);
+    }
+  }
+
+  _onNowIndicatorChange(value) {
+    this._nowIndicator = value;
+    saveBoolSetting(STORAGE_NOW_INDICATOR, value);
+    if (this._calendar) {
+      this._calendar.setOption("nowIndicator", value);
+    }
+  }
+
+  _onMaxEventsChange(value) {
+    this._maxEvents = value;
+    saveMaxEvents(value);
+    if (this._calendar) {
+      this._calendar.setOption("dayMaxEvents", value);
+    }
+  }
+
+  _colorFor(entityId) {
+    return this._colorOverrides[entityId] || colorForEntity(entityId);
+  }
+
+  _onColorChange(entityId, hexColor) {
+    this._colorOverrides[entityId] = hexColor;
+    saveColorOverrides(this._colorOverrides);
+    // Existing rendered events keep their old color until re-fetched, so
+    // force that by removing and re-adding the source (same pattern as a
+    // checkbox toggle) rather than trying to recolor in place.
+    if (this._calendar && !this._hidden.has(entityId)) {
+      const existing = this._calendar.getEventSourceById(entityId);
+      if (existing) {
+        existing.remove();
+      }
+      this._calendar.addEventSource(
+        makeEventSource(() => this._hass, entityId, hexColor)
+      );
+    }
+  }
+
   _onToggleCalendar(entityId, visible) {
     if (visible) {
       this._hidden.delete(entityId);
@@ -559,7 +755,7 @@ class HaCalendarAdminPanel extends HTMLElement {
       const shouldShow = !this._hidden.has(entityId);
       if (shouldShow && !existing) {
         this._calendar.addEventSource(
-          makeEventSource(() => this._hass, entityId, colorForEntity(entityId))
+          makeEventSource(() => this._hass, entityId, this._colorFor(entityId))
         );
       } else if (!shouldShow && existing) {
         existing.remove();
