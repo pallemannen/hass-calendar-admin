@@ -1,7 +1,7 @@
 {
   "domain": "ha_calendar_admin",
   "name": "Calendar Admin",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "documentation": "https://github.com/pallemannen/hass-calendar-admin",
   "issue_tracker": "https://github.com/pallemannen/hass-calendar-admin/issues",
   "codeowners": [

@@ -19,6 +19,7 @@ const STORAGE_COLORS = "ha-calendar-admin-panel.colors";
 const STORAGE_WEEK_NUMBERS = "ha-calendar-admin-panel.week-numbers";
 const STORAGE_NOW_INDICATOR = "ha-calendar-admin-panel.now-indicator";
 const STORAGE_MAX_EVENTS = "ha-calendar-admin-panel.max-events";
+const STORAGE_24H = "ha-calendar-admin-panel.24h-time";
 
 let fcLoadPromise = null;
 
@@ -387,6 +388,7 @@ class HaCalendarAdminPanel extends HTMLElement {
     this._weekNumbers = loadBoolSetting(STORAGE_WEEK_NUMBERS, true);
     this._nowIndicator = loadBoolSetting(STORAGE_NOW_INDICATOR, true);
     this._maxEvents = loadMaxEvents();
+    this._time24h = loadBoolSetting(STORAGE_24H, true);
     this._rendered = false;
   }
 
@@ -484,6 +486,10 @@ class HaCalendarAdminPanel extends HTMLElement {
               <input type="checkbox" id="now-indicator-toggle">
               <span>Show current time indicator</span>
             </label>
+            <label class="option-row">
+              <input type="checkbox" id="time-format-toggle">
+              <span>Use 24-hour time</span>
+            </label>
             <label class="option-row max-events-row">
               <span>Max events per day</span>
               <select id="max-events-select">
@@ -516,6 +522,10 @@ class HaCalendarAdminPanel extends HTMLElement {
     this.shadowRoot
       .getElementById("now-indicator-toggle")
       .addEventListener("change", (e) => this._onNowIndicatorChange(e.target.checked));
+    this.shadowRoot.getElementById("time-format-toggle").checked = this._time24h;
+    this.shadowRoot
+      .getElementById("time-format-toggle")
+      .addEventListener("change", (e) => this._onTime24hChange(e.target.checked));
     this.shadowRoot.getElementById("max-events-select").value =
       this._maxEvents === false ? "" : String(this._maxEvents);
     this.shadowRoot
@@ -566,6 +576,8 @@ class HaCalendarAdminPanel extends HTMLElement {
         weekNumbers: this._weekNumbers,
         nowIndicator: this._nowIndicator,
         dayMaxEvents: this._maxEvents,
+        eventTimeFormat: this._timeFormat(),
+        slotLabelFormat: this._timeFormat(),
         eventSources: this._entityIds
           .filter((id) => !this._hidden.has(id))
           .map((id) => makeEventSource(() => this._hass, id, this._colorFor(id))),
@@ -700,6 +712,19 @@ class HaCalendarAdminPanel extends HTMLElement {
     saveMaxEvents(value);
     if (this._calendar) {
       this._calendar.setOption("dayMaxEvents", value);
+    }
+  }
+
+  _timeFormat() {
+    return { hour: "2-digit", minute: "2-digit", hour12: !this._time24h };
+  }
+
+  _onTime24hChange(value) {
+    this._time24h = value;
+    saveBoolSetting(STORAGE_24H, value);
+    if (this._calendar) {
+      this._calendar.setOption("eventTimeFormat", this._timeFormat());
+      this._calendar.setOption("slotLabelFormat", this._timeFormat());
     }
   }
 
