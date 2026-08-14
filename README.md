@@ -8,8 +8,13 @@ two things the built-in Calendar panel doesn't offer:
 
 - **Live checkboxes** to show/hide each `calendar.*` entity, with a
   select-all/none control.
-- **A sort-order menu** for the calendar list (name A→Z, name Z→A, or
+- **Sort order** for the calendar list (name A→Z, name Z→A, or
   entity ID), instead of the built-in panel's registration-order list.
+  Default is A→Z.
+- **Week start** configurable to Monday or Sunday. Default is Monday.
+- **Week numbers** on or off. Default is on.
+- **Color picker** to change the color of each calendar. The default
+  is derived from the entity ID.
 
 Events from every checked calendar are merged into one
 [FullCalendar](https://fullcalendar.io/) month/week/day/list view, each
@@ -47,6 +52,10 @@ normal dashboard display card, see something like
 
 Settings → Devices & Services → Calendar Admin → delete. Then remove it via
 HACS.
+
+## HACS
+
+More info about HACS can be found at https://www.hacs.xyz/
 
 ## License
 
