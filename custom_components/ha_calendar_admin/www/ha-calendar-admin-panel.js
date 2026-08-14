@@ -14,6 +14,7 @@
 const FC_SCRIPT_URL = "/ha_calendar_admin_static/vendor/fullcalendar.global.min.js";
 const STORAGE_HIDDEN = "ha-calendar-admin-panel.hidden-calendars";
 const STORAGE_SORT = "ha-calendar-admin-panel.sort";
+const STORAGE_FIRST_DAY = "ha-calendar-admin-panel.first-day";
 
 let fcLoadPromise = null;
 
@@ -62,6 +63,23 @@ function loadSort() {
 function saveSort(value) {
   try {
     window.localStorage.setItem(STORAGE_SORT, value);
+  } catch (err) {
+    // ignore
+  }
+}
+
+function loadFirstDay() {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_FIRST_DAY);
+    return raw === null ? 0 : parseInt(raw, 10);
+  } catch (err) {
+    return 0;
+  }
+}
+
+function saveFirstDay(value) {
+  try {
+    window.localStorage.setItem(STORAGE_FIRST_DAY, String(value));
   } catch (err) {
     // ignore
   }
@@ -192,7 +210,8 @@ const STYLE = `
     cursor: pointer;
     user-select: none;
   }
-  select#sort-select {
+  select#sort-select,
+  select#first-day-select {
     width: 100%;
     padding: 6px 8px;
     border-radius: 4px;
@@ -255,6 +274,7 @@ class HaCalendarAdminPanel extends HTMLElement {
     this._entityIds = [];
     this._hidden = loadHiddenSet();
     this._sort = loadSort();
+    this._firstDay = loadFirstDay();
     this._rendered = false;
   }
 
@@ -340,6 +360,10 @@ class HaCalendarAdminPanel extends HTMLElement {
               <option value="name-desc">Name (Z → A)</option>
               <option value="entity-id">Entity ID</option>
             </select>
+            <select id="first-day-select">
+              <option value="0">Week starts Sunday</option>
+              <option value="1">Week starts Monday</option>
+            </select>
           </div>
           <ul class="calendar-list" id="calendar-list"></ul>
         </aside>
@@ -351,6 +375,10 @@ class HaCalendarAdminPanel extends HTMLElement {
     this.shadowRoot
       .getElementById("sort-select")
       .addEventListener("change", (e) => this._onSortChange(e.target.value));
+    this.shadowRoot.getElementById("first-day-select").value = String(this._firstDay);
+    this.shadowRoot
+      .getElementById("first-day-select")
+      .addEventListener("change", (e) => this._onFirstDayChange(parseInt(e.target.value, 10)));
     this.shadowRoot
       .getElementById("select-all")
       .addEventListener("change", (e) => this._onSelectAll(e.target.checked));
@@ -390,7 +418,7 @@ class HaCalendarAdminPanel extends HTMLElement {
         // entirely; .calendar-main's own overflow:auto still handles any
         // genuine overflow.
         height: "auto",
-        firstDay: 0,
+        firstDay: this._firstDay,
         eventSources: this._entityIds
           .filter((id) => !this._hidden.has(id))
           .map((id) => makeEventSource(() => this._hass, id, colorForEntity(id))),
@@ -490,6 +518,14 @@ class HaCalendarAdminPanel extends HTMLElement {
     this._sort = value;
     saveSort(value);
     this._renderSidebarList();
+  }
+
+  _onFirstDayChange(value) {
+    this._firstDay = value;
+    saveFirstDay(value);
+    if (this._calendar) {
+      this._calendar.setOption("firstDay", value);
+    }
   }
 
   _onToggleCalendar(entityId, visible) {
