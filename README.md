@@ -3,11 +3,10 @@
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?category=Integration&repository=hass-calendar-admin&owner=pallemannen)
 
 Hass Calendar Admin is a replacement for the stock Calendar sidebar panel
-provided by Home Assistant, with some additional features — specifically the
-two things the built-in Calendar panel doesn't offer:
+provided by Home Assistant, with some additional features that the
+built-in Calendar panel doesn't offer:
 
-- **Live checkboxes** to show/hide each `calendar.*` entity, with a
-  select-all/none control.
+- **Global checkbox** to show/hide each `calendar.*` entity.
 - **Sort order** for the calendar list (name A→Z, name Z→A, or
   entity ID), instead of the built-in panel's registration-order list.
   Default is A→Z.
@@ -15,7 +14,7 @@ two things the built-in Calendar panel doesn't offer:
 - **Week numbers** on or off. Default is on.
 - **Color picker** to change the color of each calendar. The default
   is derived from the entity ID.
-- **Timeline** Indicate current time in weekly and daily views. Default
+- **Timeline** to indicate current time in weekly and daily views. Default
   is on.
 - **Max events** to show per day. Default is unlimited.
 - **24h** or 12h clock. Default is 24h.
@@ -25,12 +24,12 @@ Events from every checked calendar are merged into one
 calendar colored consistently. Your checkbox and sort selections persist
 across reloads (stored in the browser).
 
-This is a thin integration: no entities, no config options, no YAML. Install
-it, add it once via the config flow, and it registers itself as a sidebar
-panel — visible only to admin users, since it's an administrative tool for
-managing a large calendar list, not a display card for a dashboard. (For a
-normal dashboard display card, see something like
-[Calendar Card Pro](https://github.com/alexpfau/calendar-card-pro) instead.)
+This is a thin integration: no entities, no install time config options, 
+no YAML. Install it, add it once via the config flow, and it registers itself 
+as a sidebar panel — visible only to admin users, since it's an administrative 
+tool for managing a large calendar list, not a display card for a dashboard. 
+(For a normal dashboard display card, see something like [Calendar Card Pro](https://github.com/alexpfau/calendar-card-pro)
+instead.)
 
 ## Install (via HACS)
 
@@ -49,7 +48,7 @@ normal dashboard display card, see something like
 - The panel calls Home Assistant's existing `GET /api/calendars/<entity_id>`
   REST endpoint per visible calendar, through the browser's already
   authenticated session — same data source the built-in Calendar panel uses.
-- Checkbox/sort state lives in `localStorage`, scoped to the browser, not to
+- Configuration state lives in `localStorage`, scoped to the browser, not to
   a Home Assistant user or entity registry.
 
 ## Uninstall
