@@ -75,9 +75,9 @@ function saveSort(value) {
 function loadFirstDay() {
   try {
     const raw = window.localStorage.getItem(STORAGE_FIRST_DAY);
-    return raw === null ? 0 : parseInt(raw, 10);
+    return raw === null ? 1 : parseInt(raw, 10);
   } catch (err) {
-    return 0;
+    return 1;
   }
 }
 
