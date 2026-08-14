@@ -380,7 +380,16 @@ class HaCalendarAdminPanel extends HTMLElement {
           right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
         },
         initialView: "dayGridMonth",
-        height: "100%",
+        // "100%" requires FullCalendar to correctly read this element's own
+        // parent height at calculation time -- confirmed via live debugging
+        // to lock in a stale, too-small value in this shadow-DOM/panel
+        // setup (the .calendar-main container ended up 122px tall instead
+        // of the real ~1300px available, with all actual grid content
+        // rendering correctly but scrolled out of view below it). "auto"
+        // sizes to actual content instead, sidestepping that measurement
+        // entirely; .calendar-main's own overflow:auto still handles any
+        // genuine overflow.
+        height: "auto",
         firstDay: 0,
         eventSources: this._entityIds
           .filter((id) => !this._hidden.has(id))
