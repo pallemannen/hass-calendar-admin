@@ -31,8 +31,7 @@ tool for managing a large calendar list, not a display card for a dashboard.
 (For a normal dashboard display card, see something like [Calendar Card Pro](https://github.com/alexpfau/calendar-card-pro)
 instead.)
 
-<img width="2034" height="1554" alt="screenshot" src="https://github.com/user-attachments/assets/8d0a941d-6f77-4394-a177-4e846217847d" />
-
+<img width="2034" height="1554" alt="screenshot" src="https://github.com/user-attachments/assets/8bdd86e1-c9b2-4c05-8e7b-ac4a3dbd6747" />
 
 ## Install (via HACS)
 
