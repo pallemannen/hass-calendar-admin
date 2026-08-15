@@ -33,6 +33,8 @@ instead.)
 
 <img width="2034" height="1554" alt="screenshot" src="https://github.com/user-attachments/assets/8bdd86e1-c9b2-4c05-8e7b-ac4a3dbd6747" />
 
+<img width="1344" height="2992" alt="phone1" src="https://github.com/user-attachments/assets/9729164a-036c-4abb-9515-3e133b3e953d" /> <img width="1344" height="2992" alt="phone2" src="https://github.com/user-attachments/assets/5959bf7f-f4f0-42e6-b6cc-b981b94c0ef0" />
+
 ## Install (via HACS)
 
 1. HACS → the "⋮" menu (top right) → **Custom repositories**.
