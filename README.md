@@ -67,10 +67,10 @@ HACS.
 
 More info about HACS can be found at https://www.hacs.xyz/
 
+## CREDITS
+
+Icon credits go to [Magnific - Flaticon](https://www.flaticon.com/free-icons/calendar)
+
 ## License
 
 MIT - see [LICENSE](LICENSE).
-
-## Icon
-
-Icon credits go to [Magnific - Flaticon](https://www.flaticon.com/free-icons/calendar)
