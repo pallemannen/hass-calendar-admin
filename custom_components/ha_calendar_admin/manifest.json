@@ -1,13 +1,15 @@
 {
   "domain": "ha_calendar_admin",
   "name": "Calendar Admin",
-  "version": "0.2.5",
-  "documentation": "https://github.com/pallemannen/hass-calendar-admin",
-  "issue_tracker": "https://github.com/pallemannen/hass-calendar-admin/issues",
+  "after_dependencies": ["http"],
   "codeowners": [
     "@pallemannen"
   ],
   "config_flow": true,
+  "documentation": "https://github.com/pallemannen/hass-calendar-admin",
   "integration_type": "service",
-  "requirements": []
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/pallemannen/hass-calendar-admin/issues",
+  "requirements": [],
+  "version": "0.2.5"
 }
