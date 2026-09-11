@@ -4,6 +4,17 @@ All notable changes to this project are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.6] - 2026-09-11
+
+### Added
+
+- Clicking a calendar event now pops up a details dialog (title, calendar
+  name, date/time range, location, and description), matching the stock HA
+  calendar panel's click-to-view behavior, which this panel previously
+  lacked entirely (clicking an event did nothing). Built on the native
+  browser `<dialog>` element (backdrop, Escape-to-close) rather than a
+  hand-rolled overlay, and on FullCalendar's built-in `eventClick` hook.
+
 ## [0.2.5] - 2026-08-14
 
 ### Changed

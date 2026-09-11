@@ -199,7 +199,11 @@ function toFcEvent(ev, entityId, color) {
     allDay,
     backgroundColor: color,
     borderColor: color,
-    extendedProps: { calendarEntityId: entityId },
+    extendedProps: {
+      calendarEntityId: entityId,
+      description: ev.description || "",
+      location: ev.location || "",
+    },
   };
 }
 
@@ -371,6 +375,72 @@ const STYLE = `
     text-align: center;
     color: var(--secondary-text-color, #727272);
   }
+  .event-dialog {
+    background: var(--card-background-color, #fff);
+    color: var(--primary-text-color, #212121);
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    width: min(420px, calc(100vw - 32px));
+    max-height: calc(100vh - 64px);
+    overflow-y: auto;
+    padding: 0;
+  }
+  .event-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.4);
+  }
+  .event-dialog-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 16px 8px 16px;
+  }
+  .event-dialog-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+  }
+  .event-dialog-header h2 {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+    overflow-wrap: break-word;
+  }
+  .event-dialog-close {
+    flex: 0 0 auto;
+    background: none;
+    border: none;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--secondary-text-color, #727272);
+    cursor: pointer;
+    padding: 4px;
+  }
+  .event-dialog-body {
+    padding: 4px 16px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .event-dialog-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 14px;
+  }
+  .event-dialog-row[hidden] {
+    display: none;
+  }
+  .event-dialog-icon {
+    flex: 0 0 auto;
+  }
+  .event-dialog-description {
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+  }
 `;
 
 class HaCalendarAdminPanel extends HTMLElement {
@@ -504,6 +574,31 @@ class HaCalendarAdminPanel extends HTMLElement {
         </aside>
         <main class="calendar-main" id="calendar-main"></main>
       </div>
+      <dialog class="event-dialog" id="event-dialog">
+        <div class="event-dialog-header">
+          <span class="event-dialog-color" id="event-dialog-color"></span>
+          <h2 id="event-dialog-title"></h2>
+          <button type="button" class="event-dialog-close" id="event-dialog-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="event-dialog-body">
+          <div class="event-dialog-row" id="event-dialog-time-row">
+            <span class="event-dialog-icon">🕑</span>
+            <span id="event-dialog-time"></span>
+          </div>
+          <div class="event-dialog-row" id="event-dialog-calendar-row">
+            <span class="event-dialog-icon">📅</span>
+            <span id="event-dialog-calendar"></span>
+          </div>
+          <div class="event-dialog-row" id="event-dialog-location-row" hidden>
+            <span class="event-dialog-icon">📍</span>
+            <span id="event-dialog-location"></span>
+          </div>
+          <div class="event-dialog-row event-dialog-description" id="event-dialog-description-row" hidden>
+            <span class="event-dialog-icon">📝</span>
+            <span id="event-dialog-description"></span>
+          </div>
+        </div>
+      </dialog>
     `;
 
     this.shadowRoot.getElementById("sort-select").value = this._sort;
@@ -536,6 +631,21 @@ class HaCalendarAdminPanel extends HTMLElement {
     this.shadowRoot
       .getElementById("select-all")
       .addEventListener("change", (e) => this._onSelectAll(e.target.checked));
+
+    const eventDialogEl = this.shadowRoot.getElementById("event-dialog");
+    this.shadowRoot
+      .getElementById("event-dialog-close")
+      .addEventListener("click", () => eventDialogEl.close());
+    // Native <dialog> click-outside-to-close idiom: a backdrop click still
+    // fires a click event on the dialog element itself (it bubbles from
+    // ::backdrop), so treat a click outside the dialog's own box as "outside".
+    eventDialogEl.addEventListener("click", (e) => {
+      if (e.target !== eventDialogEl) return;
+      const rect = eventDialogEl.getBoundingClientRect();
+      const inside =
+        rect.top <= e.clientY && e.clientY <= rect.bottom && rect.left <= e.clientX && e.clientX <= rect.right;
+      if (!inside) eventDialogEl.close();
+    });
 
     this._renderSidebarList();
 
@@ -591,6 +701,7 @@ class HaCalendarAdminPanel extends HTMLElement {
             this._calendar.updateSize();
           }
         },
+        eventClick: (info) => this._showEventDialog(info),
       });
       this._calendar.render();
     } catch (err) {
@@ -730,6 +841,63 @@ class HaCalendarAdminPanel extends HTMLElement {
 
   _colorFor(entityId) {
     return this._colorOverrides[entityId] || colorForEntity(entityId);
+  }
+
+  // Mirrors the stock HA calendar panel's click-to-view-details behavior,
+  // which this custom panel otherwise lacked entirely.
+  _showEventDialog(info) {
+    const event = info.event;
+    const props = event.extendedProps || {};
+    const calState = this._hass.states[props.calendarEntityId];
+    const calName = calState ? friendlyName(calState) : props.calendarEntityId || "";
+
+    this.shadowRoot.getElementById("event-dialog-title").textContent = event.title || "(no title)";
+    this.shadowRoot.getElementById("event-dialog-color").style.background =
+      event.backgroundColor || this._colorFor(props.calendarEntityId);
+    this.shadowRoot.getElementById("event-dialog-calendar").textContent = calName;
+    this.shadowRoot.getElementById("event-dialog-time").textContent = this._formatEventRange(event);
+
+    const locationRow = this.shadowRoot.getElementById("event-dialog-location-row");
+    if (props.location) {
+      this.shadowRoot.getElementById("event-dialog-location").textContent = props.location;
+      locationRow.hidden = false;
+    } else {
+      locationRow.hidden = true;
+    }
+
+    const descRow = this.shadowRoot.getElementById("event-dialog-description-row");
+    if (props.description) {
+      this.shadowRoot.getElementById("event-dialog-description").textContent = props.description;
+      descRow.hidden = false;
+    } else {
+      descRow.hidden = true;
+    }
+
+    this.shadowRoot.getElementById("event-dialog").showModal();
+  }
+
+  _formatEventRange(event) {
+    const start = event.start;
+    const end = event.end || event.start;
+    const dateFmt = new Intl.DateTimeFormat(undefined, {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    if (event.allDay) {
+      // FullCalendar's end for all-day events is exclusive of the last day.
+      const inclusiveEnd = new Date(end.getTime() - 1);
+      if (inclusiveEnd.toDateString() === start.toDateString()) {
+        return dateFmt.format(start);
+      }
+      return `${dateFmt.format(start)} – ${dateFmt.format(inclusiveEnd)}`;
+    }
+    const timeFmt = new Intl.DateTimeFormat(undefined, this._timeFormat());
+    if (start.toDateString() === end.toDateString()) {
+      return `${dateFmt.format(start)} · ${timeFmt.format(start)} – ${timeFmt.format(end)}`;
+    }
+    return `${dateFmt.format(start)} ${timeFmt.format(start)} – ${dateFmt.format(end)} ${timeFmt.format(end)}`;
   }
 
   _onColorChange(entityId, hexColor) {
