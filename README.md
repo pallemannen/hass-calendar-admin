@@ -38,14 +38,19 @@ instead.)
 <img width="250" alt="phone1" src="https://github.com/user-attachments/assets/9729164a-036c-4abb-9515-3e133b3e953d" />      <img width="250" alt="phone2" src="https://github.com/user-attachments/assets/5959bf7f-f4f0-42e6-b6cc-b981b94c0ef0" />      <img width="250" alt="phone3" src="https://github.com/user-attachments/assets/fd501ab1-7cb9-45d0-8ea9-c52b5f2c51f2" />
 
 
-## Install (via HACS)
+## Install
 
-1. HACS → the "⋮" menu (top right) → **Custom repositories**.
-2. Repository: `pallemannen/hass-calendar-admin`, Category: **Integration**.
-3. Install **Calendar Admin**, then restart Home Assistant Core.
-4. Settings → Devices & Services → **Add Integration** → search for
-   "Calendar Admin" → confirm. No fields to fill in.
-5. "Calendar Admin" appears in the sidebar (admin users only).
+Calendar Admin is in the default HACS store.
+
+1. Click the button above, or open HACS and search for **Calendar Admin**.
+2. **Download** it, then restart Home Assistant.
+3. Add the integration (no fields to fill in):
+
+   [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=ha_calendar_admin)
+
+   Or: Settings → Devices & Services → **Add Integration** → search for
+   "Calendar Admin".
+4. "Calendar Admin" appears in the sidebar (admin users only).
 
 ## How it works
 
