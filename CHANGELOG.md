@@ -4,6 +4,12 @@ All notable changes to this project are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.7] - 2026-11-27
+
+### Fixed
+
+- Brand images meet Home Assistant's sizes: `brand/icon.png` is 256×256 (was 128×128), `brand/logo.png` 256×256 (was 512×512), with the 512×512 originals as `icon@2x.png` and `logo@2x.png`.
+
 ## [0.2.6] - 2026-09-11
 
 ### Added
